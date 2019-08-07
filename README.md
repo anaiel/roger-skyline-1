@@ -4,7 +4,7 @@ This project was completed in August 2019 as part of the 42 cursus. roger-skylin
 
 This page is intended to be a walkthrough to complete the project for someone who has no idea how a virtual machine or systems administration works. My machine is running with Debian 10.0.0
 
-![path to roger-skyline-1](https://i.imgur.com/MB6rV4f.png "SysAdmin branch > Init > roger-skyline-1"]
+![path to roger-skyline-1](https://i.imgur.com/MB6rV4f.png "SysAdmin branch > Init > roger-skyline-1")
 
 *Systems administration and networks, Unix*
 
@@ -45,61 +45,71 @@ Resources: [Hypervisor @Wikipedia](https://en.wikipedia.org/wiki/Hypervisor), [I
     %sudo   ALL=(ALL:ALL)   ALL
     <username>  ALL=(ALL:ALL)   NOPASSWD:ALL
     ```
-
-### Tester
-
-- Vérifier les partitions `sudo fdisk -l` ⇒ donne le resultat en GibiBytes donc normal si ça ne correspond pas (3.9). Voir conversion ici :
-- Tester le sudo :
-```
-su anleclab
-sudo apt update
-sudo adduser guest
-su guest
-sudo apt update
-exit
-sudo /etc/sudoers #Rajouter la ligne guest (ALL:ALL) NOPASSWD:ALL
-su guest
-sudo apt update
-exit
-sudo deluser --remove-home guest
-```
+    Alternatively, you can use the command `adduser <username> sudo`
 
 ## IP Fixe
-- Netmask /30 = 255.255.255.252
-- dans la config vb de la vm, mettre le network en bridge
-- editer /etc/network/interfaces pour mettre `auto enp0s3`
-- creer un fichier /etc/network/interfaces.d/enp0s3 avec les specifications appropriées
-```
-iface enp0s3 inet static
-      address 10.11.200.233
-      netmask 255.255.255.252
-      gateway 10.11.254.254
-```
-- restart et checker avec la commande `ip addr`
 
-### Tester
+💡 *This part could use a little more pedagogy, I'll get to it when I have a better grasp on why this works!
 
+Resources: [What is a netmask?](https://www.computerhope.com/jargon/n/netmask.htm), [IP Calculator](http://jodies.de/ipcalc), and also kudos to @gde-pass for [his roger-skyline-1 walkthrough](https://github.com/gde-pass/roger-skyline-1#staticIP)
 
-## SSH
-- Editer le fichier /etc/ssh/sshd_config
-    - décommenter PasswordAuthentification yes
-    - décommenter Port 22 et changer en Port 2222
-    - ajouter PermitRootLogin no
-- Générer les clés (dans l'hote)
-    - `ssh-keygen` et suivre les steps
-    - `ssh-copy-id -i ~/.ssh/id_rsa anleclab@10.11.200.233 -p 2222`
-- /etc/ssh/sshd_config PasswordAuthentification no
+1. Edit the **/etc/network/interfaces** file to look like this:
+    ```
+    # The primary network interface
+    auto enp0s3
+    ```
+2. Create the **/etc/network/interfaces.d/enp0s3** file:
+    ```
+    iface enp0s3 inet static
+        address 10.11.200.233
+        netmask 255.255.255.252
+        gateway 10.11.254.254
+    ```
+    NB: I chose 10.11.200.233 but you can use the IP the dhcp service gave you before you deactivated it (`ip addr` and write down the enp0s3 IP).
+    NB: 255.255.255.252 corresponds to a /30 netmask.
+3. Restart the networking service: `service networking restart`
 
-### Tester
-Dans le host
-```
-ssh anleclab@10.11.200.233 -p 2222
-exit
-ssh toto@10.11.200.233 -p 2222
-ssh root@10.11.200.233 -p 2222
-ssh-keygen
-ssh-copy-id ~/.ssh/root root@10.11.200.233 -p 2222
-```
+⚡️ **Testing**
+
+- You can check the partitions with the `fdisk -l` command. ⚠️ *It is normal for the partition to be only 3.9GB when you set it up to be 4.2GB because fdisk displays the size in gibibytes. [A simple conversion](https://www.gbmb.org/gib-to-gb) shows that 3.9GiB = 4.2GB.
+- You can test that your initial user has sudo rights by running any command with sudo :
+    ```
+    su <username>
+    sudo apt update
+    ```
+- You can check your ip address with the `ip addr` command.
+- The evaluation asks that you change the netmask and reconfigure whatever you need to reconfigure. I'm not sure I get the point of this instruction, but here's what you can do: edit the **/etc/network/interfaces.d/enp0s3** file and change the value of the netmask. A simple `service networking restart` will not work to change the netmask (you can check that `ip addr` returns the same result as before, so use `systemctl restart networking` instead.
+
+## Setting up the SSH connexion
+
+Resources: [How does SSH work?](https://www.hostinger.com/tutorials/ssh-tutorial-how-does-ssh-work), [How to use ssh-keygen](https://www.ssh.com/ssh/keygen/)
+
+1. Edit the **/etc/ssh/sshd_config** file:
+    - Uncomment `PasswordAuthentification yes` (you need to be able to use a password to connect to the machine for now, in order to copy the ssh key you will generate on the host machine to the VM without using a ssh key... because you haven't copied the key yet)
+    - Uncomment `Port 22` and choose the port you want. I'll use 2222 in the future
+    - Uncomment `PermitRootLogin no`
+3. Restart the ssh service: `service ssh restart`
+2. Setup the ssh key for <username>. Type the following commands in the host machine:
+    - `ssh-keygen` (you can keep the default location for your key if you haven't generated a key before)
+    - `ssh-copy-id -i ~/.ssh/id_rsa <username>@10.11.200.233 -p 2222`
+        🔮 *This will automatically copy the generated key to the ~/.ssh/authorized_keys file of <username>. It will ask for <username>'s password to connect to the VM.This is why you needed to leave the possibility of password identification, otherwise you would only have been able to copy the key to the machine via ssh pubkey identification which you haven't set up yet. Or you would have had to copy by hand the key to the ~/.ssh/authorized_keys file, which would have been a pain in the ass.*
+3. Edit again the **/etc/ssh/sshd_config** file and change `PasswordAuthentification no`.
+4. `service ssh restart`
+
+⚡️ **Testing**
+
+In the host machine:
+- `ssh <username>@10.11.200.233 -p 2222` should open an ssh connexion
+- `ssh randomuser@10.11.200.233 -p 2222` should return a pubkey error
+- The evaluation asks that you create a sudo user with a ssh key. The ssh key part can be a pain in the ass so don't hesitate to show that your <username>'s ssh connexion works fine. Otherwise, here's what you can do:
+    - In the VM (as root (don't use sudo then) or as <username>):
+        ```
+        sudo adduser newuser
+        sudo adduser newuser sudo
+        ```
+    - In the host machine: `ssh-keygen` and choose a different location for the file so as to not overwrite the <username>'s key. For example choose **/Users/<username/.ssh/newuser**
+    - Here you can manually type the generated key to the VM's **/home/newuser/.ssh/authorized_keys** or edit **/etc/ssh/sshd_config** and enable PasswordAuthentification and restart the ssh service and `ssh-copy-id -i ~/.ssh/newuser <username>@10.11.200.233 -p 2222` and disable PasswordAuthentification and restart the ssh service. Phew.
+    - Now you can check that ssh authentification works for newuser with `ssh -i ~/.ssh/newuser newuser@10.11.200.233`
 
 ## Protections
 - Firewall
