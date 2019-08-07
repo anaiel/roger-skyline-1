@@ -115,33 +115,44 @@ ssh-copy-id ~/.ssh/root root@10.11.200.233 -p 2222
       ```
       KILL_ROUTE="/sbin/iptables -I INPUT -s $TARGET$ -j DROP" # Décommenter cette ligne et commenter les autres KILL_ROUTE
       ```
-    [](https://fr-wiki.ikoula.com/fr/Se_prot%C3%A9ger_contre_le_scan_de_ports_avec_portsentry)
+  
+### Tester
 
-    [→ Tuto nmap - scan nmap des ports ouverts](https://www.memoinfo.fr/tutoriels-linux/tuto-nmap-scaner-les-ports-ouverts/)
+- afficher l'ip table : `iptables --list`
+- tester le firewall (arreter portsentry d'abord `service portentry stop` puis utiliser `nmap 10.11.200.233` depuis le host (penser à réactiver portsentry : `service portsentry start`
+- tester le DoS:
+    - faire plusieurs tentatives de connexion ssh erronées
+    - utiliser slowloris :
+        ```
+        git clone https://github.com/llaera/slowloris.pl
+        cd slowloris.pl
+        perl slowloris.pl -dns 10.11.200.233
+        ```
+    - pour retirer l'ip des ip bannies, utiliser la commande `iptables -D INPUT 1`
+ - tester le scan de port : `nmap 10.11.200.233` (puis penser à retirer l'ip des ip bannies)
 
-    - pour tester : `nmap -Pn 10.11.200.247`
-    - 
 
-    Pas bien sur que ça ait fonctionné... comment tester ?
+## Arrêter les services
 
-- **Arrêter les services inutiles**
-    - `service <service> stop` : apparmor (secu), console-setup, hwclock.sh, keyboard-setup.sh
-    - pas touche a dbus (permet communication entre processus), cron, fail2ban, networking, portsentry
-    - Pour voir la liste des services + description : `systemctl list-units | grep service`
+- `service <service> stop`
 
-    Je suis toujours vraiment pas sur de moi
+### Tester
+- pour voir les services : `service --status-all`
+- Pour voir la liste des services + description : `systemctl list-units | grep service`
 
-- **Scripts**
-    - `apt install mailutils`
-    - `crontab -e` pour creer la crontab
-    - ajouter les règles dedans
+## Scripts
 
-Today 
-
-- Apparemment le probleme de fonctionnement de portsentry vient du fait que si la policy par defaut est DROP pour incoming il ne surveille pas les ports
-    - test en mettant la policy par defaut allow et en effet nmap semble coincé (yep l'IP est bannie) (pour retirer l'adresse bannie `iptables -D INPUT 1` (ou 1 correspond a la position de la règle à retirer)
-    - soluce : avec un seul port ouvert, portsentry ne fonctionne pas : il faut donc ouvrir les port http et https (qui ne sont ps nécessaires suivant la question du firewall pour la partie obligatoire mais le sont pour la partie optionnelle
-
-        ufw allow http
-        ufw allow https
-        service portsentry restart
+- `apt install mailutils` pour pouvoir envoyer des mails
+- crontab -e pour créer la crontab et éditer le contenu pour planifier les scripts
+    ```
+    SHEL=/bin/bash
+    PATH=/sbin:/bin:/usr/sbin:/usr/bin
+    
+    @reboot sh /update.sh
+    0 4 * * 1 sh /update.sh
+    0 0 * * * sh /cronCheck.sh
+    ```
+    
+### Tester
+- Pour le script d'update : `cat /var/log/update_script.log` doit avoir le log du boot de debut de correction
+- Pour le script de crontab : modifier le fichier `/etc/crontab` et faire `sh /cronChecker.sh` puis `mail` pour vérifier que le mail a été reçu (attention, il y a un alias, donc le mail est reçu dans la boite de anleclab. Sinon, il faut regarder dans /var/mail/mail si on supprime l'alias dans /etc/aliases.
