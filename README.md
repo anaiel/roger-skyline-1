@@ -1,25 +1,50 @@
 # roger-skyline-1
 
-## Initialisation de la VM
+This project was completed in August 2019 as part of the 42 cursus. roger-skyline-1 is the second project of the SysAdmin branch of the cursus, which aims at giving an introduction to systems administration problematics. For this project, the goal was to create a virtual machine and play with some basic networking concepts.
 
-OS: Debian 10
-Hyperviseur: VirtualBox
+This page is intended to be a walkthrough to complete the project for someone who has no idea how a virtual machine or systems administration works. My machine is running with Debian 10.0.0
 
-- Lancer la machine et suivre l'installation
-    - hostname: roger
-    - domain name: (laisser vide)
-    - users : root (toor), anleclab (anleclab)
-    - Partitionning automatique, supprimer la partition existante, dans le FREE SPACE créer une partition de taille 4.2G
-    - proxy ⇒ leave blank
-    - only install SSH and standard tools
+![path to roger-skyline-1](https://i.imgur.com/MB6rV4f.png "SysAdmin branch > Init > roger-skyline-1"]
 
-- Installer sudo :
-```
-su root
-apt install sudo
-nano /etc/sudoers #Rajouter la ligne anleclab (ALL:ALL) NOPASSWD:ALL
-exit
-```
+*Systems administration and networks, Unix*
+
+**Overview of the project**
+- [Setting up the VM](#setting-up-the-vm)
+    + [Creating the VM](#creating-the-vm)
+    + [sudo](#sudo)
+    + [Static IP](#static-ip)
+- [Setting up the SSH connexion](#setting-up-the-ssh-connexion)
+- [Protecting the machine](#protecting-the-machine)
+    + [Firewall](#firewall)
+    + [DoS attacks](#dos-attacks)
+    + [Port scanning](#port-scanning)
+- [Scripts](scripts)
+
+## Setting up the VM
+
+### Creating the VM
+
+Resources: [Hypervisor @Wikipedia](https://en.wikipedia.org/wiki/Hypervisor), [Installing Debian Linux in a VirtualBox Virtual Machine](http://www.brianlinkletter.com/installing-debian-linux-in-a-virtualbox-virtual-machine/)
+
+1. Download the debian image ([for example, here](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.0.0-amd64-netinst.iso)
+2. Launch VirtualBox, click new, and follow the steps (be careful to choose the *Fixed size* option)
+3. Insert the debian image: click on *Settings* then *Storage* and under *Controller: IDE* choose the image you have previously downloaded.
+4. To prepare for the **[Static IP](#static-ip)**, in the settings of the machine, choose *Bridged Adapter* in the *Network* menu.
+5. Launch the machine and follow the installation process: choose the root password, the initial user, etc. A couple of steps to watch for:
+    - Partitioning: choose the automatic partitioning, then delete the existing partition and create a 4.2GB partition in the FREE SPACE. (you can choose primary partitioning, for more info about this see [read this](https://www.quora.com/What-is-the-difference-between-Primary-and-logical-partition)
+    - Only install SSH and standard tools, nothing else.
+    - domain and proxy can be left blank
+
+### sudo
+
+1. Connect to your machine as root (at boot or using `su root`)
+2. Install sudo: `apt install sudo`
+3. Add you initial user to the sudoers group: edit the **/etc/sudoers** file to look like this :
+    ```
+    # Allow members of group sudo to execute any command
+    %sudo   ALL=(ALL:ALL)   ALL
+    <username>  ALL=(ALL:ALL)   NOPASSWD:ALL
+    ```
 
 ### Tester
 
