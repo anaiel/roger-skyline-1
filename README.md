@@ -2,11 +2,13 @@
 
 This project was completed in August 2019 as part of the 42 cursus. roger-skyline-1 is the second project of the SysAdmin branch of the cursus, which aims at giving an introduction to systems administration problematics. For this project, the goal was to create a virtual machine and play with some basic networking concepts.
 
-This page is intended to be a walkthrough to complete the project for someone who has no idea how a virtual machine or systems administration works. My machine is running with Debian 10.0.0
-
 ![path to roger-skyline-1](https://i.imgur.com/MB6rV4f.png "SysAdmin branch > Init > roger-skyline-1")
 
 *Systems administration and networks, Unix*
+
+This page is intended to be a walkthrough to complete the project for someone who has no idea how a virtual machine or systems administration works. My machine is running with Debian 10.0.0.
+
+⚠️ *I am not a very experienced SysAdmin. In fact, this project is as far as I went down that road. So please take everything written here with a grain of salt*
 
 **Overview of the project**
 - [Setting up the VM](#setting-up-the-vm)
@@ -97,7 +99,7 @@ This page is intended to be a walkthrough to complete the project for someone wh
 2. Setup the ssh key for <username>. Type the following commands in the host machine:
     - `ssh-keygen` (you can keep the default location for your key if you haven't generated a key before)
     - `ssh-copy-id -i ~/.ssh/id_rsa <username>@10.11.200.233 -p 2222`
-        🔮 *This will automatically copy the generated key to the ~/.ssh/authorized_keys file of <username>. It will ask for <username>'s password to connect to the VM.This is why you needed to leave the possibility of password identification, otherwise you would only have been able to copy the key to the machine via ssh pubkey identification which you haven't set up yet. Or you would have had to copy by hand the key to the ~/.ssh/authorized_keys file, which would have been a pain in the ass.*
+    🔮 *This will automatically copy the generated key to the ~/.ssh/authorized_keys file of <username>. It will ask for <username>'s password to connect to the VM.This is why you needed to leave the possibility of password identification, otherwise you would only have been able to copy the key to the machine via ssh pubkey identification which you haven't set up yet. Or you would have had to copy by hand the key to the ~/.ssh/authorized_keys file, which would have been a pain in the ass.*
 3. Edit again the **/etc/ssh/sshd_config** file and change `PasswordAuthentification no`.
 4. `service ssh restart`
 
@@ -124,7 +126,7 @@ In the host machine:
 
 ### Firewall
 
-📕 *Resources: [Debian firewall](https://wiki.debian.org/DebianFirewall), [Uncomplicated Firewall](https://wiki.debian.org/Uncomplicated%20Firewall%20%28ufw%29)
+📕 *Resources: [Debian firewall](https://wiki.debian.org/DebianFirewall), [Uncomplicated Firewall](https://wiki.debian.org/Uncomplicated%20Firewall%20%28ufw%29)*
 
 For this part you can propably try and edit the iptable yourself with your bare hands. But Uncomplicated Firewall is, well... uncomplicated and makes it really easy to set up the firewall.
 
@@ -219,9 +221,9 @@ apt upgrade -y 2>/dev/null >> $LOGFILE
 echo "" >> $LOGFILE
 ```
 
-💡 *In case you didn't know:
-`2>/dev/null` redirects any message on the error output (file descriptor 2) to /dev/null (basically, it sends it to the void)
-`>>` appends to a file while `>` overwrites a file.*
+💡 *In case you didn't know:*
+- *`2>/dev/null` redirects any message on the error output (file descriptor 2) to /dev/null (basically, it sends it to the void)*
+- *`>>` appends to a file while `>` overwrites a file.*
 
 The second script should monitor the **/etc/crontab** file and send an email if it was modified since the last check was performed. Therefore, you need some kind of backup of the file to compare the old one with the current one. I chose to store a hash of the file in another file (**/var/tmp/cron_hash**).
 You'll need to download mailutils to be able to send a mail (`apt install mailutils`).
@@ -248,11 +250,19 @@ Now that the scripts are done, you need to program their execution with crontab.
 SHELL=/bin/bash
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
   
-@reboot sh /update.sh #execute the update script when the vm reboots
-0 4 * * 1 sh /update.sh #execute the update script when it is 0 minutes past 4 hours, whatever the day of the month, every month, on Monday
-0 0 * * * sh /cronCheck.sh #execute the cronCheck script when it is 0 mintutes past 0 hours, every day, every month, every day of the week
+@reboot sh /update.sh       #execute the update script when the vm reboots
+0 4 * * 1 sh /update.sh     #execute the update script when it is 0 minutes past 4 hours, whatever the day of the month, every month, on Monday
+0 0 * * * sh /cronCheck.sh  #execute the cronCheck script when it is 0 mintutes past 0 hours, every day, every month, every day of the week
 ```
-    
-### Tester
-- Pour le script d'update : `cat /var/log/update_script.log` doit avoir le log du boot de debut de correction
-- Pour le script de crontab : modifier le fichier `/etc/crontab` et faire `sh /cronChecker.sh` puis `mail` pour vérifier que le mail a été reçu (attention, il y a un alias, donc le mail est reçu dans la boite de anleclab. Sinon, il faut regarder dans /var/mail/mail si on supprime l'alias dans /etc/aliases.
+
+-------
+
+⚡️ **Testing**
+
+- [x] The **/var/log/update_script.log** should have a log of the boot at the begining of the evaluation. You can also execute the script and check that a log was added at the end of the file.
+- [x] For the crontab checker :
+    * Execute the script
+        + If you kept the alias and are logged in as <username>, `mail` should tell you `No mail for <username>
+        + If you kept the alias and are logged in as someone else, **/var/mail/<username>** should be empty
+        + If you deleted the alias, **/var/mail/mail** should be empty
+    * Edit **/etc/crontab** and execute the script. Now the same method as before should tell you that there is mail.
