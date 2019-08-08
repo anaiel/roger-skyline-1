@@ -24,16 +24,16 @@ This page is intended to be a walkthrough to complete the project for someone wh
 
 ### Creating the VM
 
-Resources: [Hypervisor @Wikipedia](https://en.wikipedia.org/wiki/Hypervisor), [Installing Debian Linux in a VirtualBox Virtual Machine](http://www.brianlinkletter.com/installing-debian-linux-in-a-virtualbox-virtual-machine/)
+*📕 Resources: [Hypervisor @Wikipedia](https://en.wikipedia.org/wiki/Hypervisor), [Installing Debian Linux in a VirtualBox Virtual Machine](http://www.brianlinkletter.com/installing-debian-linux-in-a-virtualbox-virtual-machine/)*
 
-1. Download the debian image ([for example, here](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.0.0-amd64-netinst.iso)
+1. Download the debian image ([for example, here](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.0.0-amd64-netinst.iso))
 2. Launch VirtualBox, click new, and follow the steps (be careful to choose the *Fixed size* option)
 3. Insert the debian image: click on *Settings* then *Storage* and under *Controller: IDE* choose the image you have previously downloaded.
 4. To prepare for the **[Static IP](#static-ip)**, in the settings of the machine, choose *Bridged Adapter* in the *Network* menu.
 5. Launch the machine and follow the installation process: choose the root password, the initial user, etc. A couple of steps to watch for:
-    - Partitioning: choose the automatic partitioning, then delete the existing partition and create a 4.2GB partition in the FREE SPACE. (you can choose primary partitioning, for more info about this see [read this](https://www.quora.com/What-is-the-difference-between-Primary-and-logical-partition)
+    - Partitioning: choose the automatic partitioning, then delete the existing partition and create a 4.2GB partition in the FREE SPACE (you can choose primary partitioning, for more info about this see [read this](https://www.quora.com/What-is-the-difference-between-Primary-and-logical-partition)).
     - Only install SSH and standard tools, nothing else.
-    - domain and proxy can be left blank
+    - Domain and proxy can be left blank.
 
 ### sudo
 
@@ -47,11 +47,11 @@ Resources: [Hypervisor @Wikipedia](https://en.wikipedia.org/wiki/Hypervisor), [I
     ```
     Alternatively, you can use the command `adduser <username> sudo`
 
-## IP Fixe
+## Static IP
 
-💡 *This part could use a little more pedagogy, I'll get to it when I have a better grasp on why this works!
+💡 *This part could use a little more pedagogy, I'll get to it when I have a better grasp on why this works!*
 
-Resources: [What is a netmask?](https://www.computerhope.com/jargon/n/netmask.htm), [IP Calculator](http://jodies.de/ipcalc), and also kudos to @gde-pass for [his roger-skyline-1 walkthrough](https://github.com/gde-pass/roger-skyline-1#staticIP)
+📕 *Resources: [What is a netmask?](https://www.computerhope.com/jargon/n/netmask.htm), [IP Calculator](http://jodies.de/ipcalc), and also kudos to @gde-pass for [his roger-skyline-1 walkthrough](https://github.com/gde-pass/roger-skyline-1#staticIP)*
 
 1. Edit the **/etc/network/interfaces** file to look like this:
     ```
@@ -69,20 +69,23 @@ Resources: [What is a netmask?](https://www.computerhope.com/jargon/n/netmask.ht
     NB: 255.255.255.252 corresponds to a /30 netmask.
 3. Restart the networking service: `service networking restart`
 
+-------
+
 ⚡️ **Testing**
 
-- You can check the partitions with the `fdisk -l` command. ⚠️ *It is normal for the partition to be only 3.9GB when you set it up to be 4.2GB because fdisk displays the size in gibibytes. [A simple conversion](https://www.gbmb.org/gib-to-gb) shows that 3.9GiB = 4.2GB.
-- You can test that your initial user has sudo rights by running any command with sudo :
+- [x] You can check the partitions with the `fdisk -l` command.
+    ⚠️ *It is normal for the partition to be only 3.9GB when you set it up to be 4.2GB because fdisk displays the size in gibibytes. [A simple conversion](https://www.gbmb.org/gib-to-gb) shows that 3.9GiB = 4.2GB.*
+- [x] You can test that your initial user has sudo rights by running any command with sudo :
     ```
     su <username>
     sudo apt update
     ```
-- You can check your ip address with the `ip addr` command.
-- The evaluation asks that you change the netmask and reconfigure whatever you need to reconfigure. I'm not sure I get the point of this instruction, but here's what you can do: edit the **/etc/network/interfaces.d/enp0s3** file and change the value of the netmask. A simple `service networking restart` will not work to change the netmask (you can check that `ip addr` returns the same result as before, so use `systemctl restart networking` instead.
+- [x] You can check your ip address with the `ip addr` command.
+- [x] The evaluation asks that you change the netmask and reconfigure whatever you need to reconfigure. I'm not sure I get the point of this instruction, but here's what you can do: edit the **/etc/network/interfaces.d/enp0s3** file and change the value of the netmask. A simple `service networking restart` will not work to change the netmask (you can check that `ip addr` returns the same result as before, so use `systemctl restart networking` instead.
 
 ## Setting up the SSH connexion
 
-Resources: [How does SSH work?](https://www.hostinger.com/tutorials/ssh-tutorial-how-does-ssh-work), [How to use ssh-keygen](https://www.ssh.com/ssh/keygen/)
+📕 *Resources: [How does SSH work?](https://www.hostinger.com/tutorials/ssh-tutorial-how-does-ssh-work), [How to use ssh-keygen](https://www.ssh.com/ssh/keygen/)*
 
 1. Edit the **/etc/ssh/sshd_config** file:
     - Uncomment `PasswordAuthentification yes` (you need to be able to use a password to connect to the machine for now, in order to copy the ssh key you will generate on the host machine to the VM without using a ssh key... because you haven't copied the key yet)
@@ -95,6 +98,8 @@ Resources: [How does SSH work?](https://www.hostinger.com/tutorials/ssh-tutorial
         🔮 *This will automatically copy the generated key to the ~/.ssh/authorized_keys file of <username>. It will ask for <username>'s password to connect to the VM.This is why you needed to leave the possibility of password identification, otherwise you would only have been able to copy the key to the machine via ssh pubkey identification which you haven't set up yet. Or you would have had to copy by hand the key to the ~/.ssh/authorized_keys file, which would have been a pain in the ass.*
 3. Edit again the **/etc/ssh/sshd_config** file and change `PasswordAuthentification no`.
 4. `service ssh restart`
+
+---------
 
 ⚡️ **Testing**
 
