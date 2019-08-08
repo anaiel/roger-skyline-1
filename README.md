@@ -20,6 +20,7 @@ This page is intended to be a walkthrough to complete the project for someone wh
     + [Firewall](#firewall)
     + [DoS attacks](#dos-attacks)
     + [Port scanning](#port-scanning)
+- [Services]
 - [Scripts](scripts)
 
 ## Setting up the VM
@@ -53,7 +54,7 @@ This page is intended to be a walkthrough to complete the project for someone wh
 
 💡 *This part could use a little more pedagogy, I'll get to it when I have a better grasp on why this works!*
 
-📕 *Resources: [What is a netmask?](https://www.computerhope.com/jargon/n/netmask.htm), [IP Calculator](http://jodies.de/ipcalc), and also kudos to gde-pass for [his roger-skyline-1 walkthrough](https://github.com/gde-pass/roger-skyline-1#staticIP)*
+📕 *Resources: [Masquage de sous-réseaux](https://www.frameip.com/masques-de-sous-reseau/) (bit of an intense read), [What is a netmask?](https://www.computerhope.com/jargon/n/netmask.htm), [IP Calculator](http://jodies.de/ipcalc), and also kudos to gde-pass for [his roger-skyline-1 walkthrough](https://github.com/gde-pass/roger-skyline-1#staticIP)*
 
 1. Edit the **/etc/network/interfaces** file to look like this:
     ```
@@ -207,6 +208,25 @@ Once again, you can probably try to play with the iptable to do this, but fail2b
     * `service restart portsentry`
 
 -------
+
+## Services
+
+The subject asks that any non-useful service should be stopped. You can use the `systemctl stop <service>` command in order to stop them.
+
+```
+service apparmor stop           #security service, arguably not necessary for the subjet or for the machine to work
+service console-setup.sh stop
+service keyboard-setup.sh stop
+```
+
+-----------
+
+⚡️ **Testing**
+
+- [x] Use `service --status-all` to list services. A '+' signifies the service is running, a '-' that it is stopped. For another list of services with their status and information about what they do, use `systemctl list-units | grep service`
+- [x] The evaluation also requires that docker, vagrant, traefik, etc. are not used. You can check that they aren't with the command `apt search <docker/vagrant/...> | grep <docker/vagrant/...>`: if it was installed, the flag '[installed]' should appear next to the name of the package.
+
+-----------
 
 ## Scripts
 
