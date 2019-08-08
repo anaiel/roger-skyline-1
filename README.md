@@ -20,8 +20,8 @@ This page is intended to be a walkthrough to complete the project for someone wh
     + [Firewall](#firewall)
     + [DoS attacks](#dos-attacks)
     + [Port scanning](#port-scanning)
-- [Services]
-- [Scripts](scripts)
+- [Services](#services)
+- [Scripts](#scripts)
 
 ## Setting up the VM
 
