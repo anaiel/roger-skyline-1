@@ -51,7 +51,7 @@ This page is intended to be a walkthrough to complete the project for someone wh
 
 💡 *This part could use a little more pedagogy, I'll get to it when I have a better grasp on why this works!*
 
-📕 *Resources: [What is a netmask?](https://www.computerhope.com/jargon/n/netmask.htm), [IP Calculator](http://jodies.de/ipcalc), and also kudos to @gde-pass for [his roger-skyline-1 walkthrough](https://github.com/gde-pass/roger-skyline-1#staticIP)*
+📕 *Resources: [What is a netmask?](https://www.computerhope.com/jargon/n/netmask.htm), [IP Calculator](http://jodies.de/ipcalc), and also kudos to gde-pass for [his roger-skyline-1 walkthrough](https://github.com/gde-pass/roger-skyline-1#staticIP)*
 
 1. Edit the **/etc/network/interfaces** file to look like this:
     ```
@@ -83,6 +83,8 @@ This page is intended to be a walkthrough to complete the project for someone wh
 - [x] You can check your ip address with the `ip addr` command.
 - [x] The evaluation asks that you change the netmask and reconfigure whatever you need to reconfigure. I'm not sure I get the point of this instruction, but here's what you can do: edit the **/etc/network/interfaces.d/enp0s3** file and change the value of the netmask. A simple `service networking restart` will not work to change the netmask (you can check that `ip addr` returns the same result as before, so use `systemctl restart networking` instead.
 
+------------
+
 ## Setting up the SSH connexion
 
 📕 *Resources: [How does SSH work?](https://www.hostinger.com/tutorials/ssh-tutorial-how-does-ssh-work), [How to use ssh-keygen](https://www.ssh.com/ssh/keygen/)*
@@ -104,9 +106,9 @@ This page is intended to be a walkthrough to complete the project for someone wh
 ⚡️ **Testing**
 
 In the host machine:
-- `ssh <username>@10.11.200.233 -p 2222` should open an ssh connexion
-- `ssh randomuser@10.11.200.233 -p 2222` should return a pubkey error
-- The evaluation asks that you create a sudo user with a ssh key. The ssh key part can be a pain in the ass so don't hesitate to show that your <username>'s ssh connexion works fine. Otherwise, here's what you can do:
+- [x] `ssh <username>@10.11.200.233 -p 2222` should open an ssh connexion
+- [x] `ssh randomuser@10.11.200.233 -p 2222` should return a pubkey error
+- [x] The evaluation asks that you create a sudo user with a ssh key. The ssh key part can be a pain in the ass so don't hesitate to show that your <username>'s ssh connexion works fine. Otherwise, here's what you can do:
     - In the VM (as root (don't use sudo then) or as <username>):
         ```
         sudo adduser newuser
@@ -116,82 +118,140 @@ In the host machine:
     - Here you can manually type the generated key to the VM's **/home/newuser/.ssh/authorized_keys** or edit **/etc/ssh/sshd_config** and enable PasswordAuthentification and restart the ssh service and `ssh-copy-id -i ~/.ssh/newuser <username>@10.11.200.233 -p 2222` and disable PasswordAuthentification and restart the ssh service. Phew.
     - Now you can check that ssh authentification works for newuser with `ssh -i ~/.ssh/newuser newuser@10.11.200.233`
 
-## Protections
-- Firewall
-    - `apt install ufw`
-      ```
-      ufw enable
-      ufw default deny incoming #changes the default policy and drops any oncoming traffic
-      ufw default allow outgoing #allows outgoing traffic by default
-      ufw allow 2222 #allows port 2222 (ssh)
-      ufw allow http #pas nécessaire pour la partie obligatoire mais permet quand meme a portsentry de fonctionner
-      ufw allow https
-      ```
-    - pour verifier l'etat : ufw status verbose
-    - pour consulter la totalité des regles de pare feu : `iptables --list`
-- DoS
-    - `apt install fail2ban`
-    - modifier le ficher `/etc/fail2ban/jail.conf` : il faut que la partie sur le ssh ressemble à ça :
-      ```
-      [sshd]
-      # Comment...
-      enabled = true
-      port = 2222
-      logpath = #...
-      ```
-    - dans le meme fichier il est aussi possible de modifier le nombre de tentative erronées avant le banissement ou le temps de bannissement
-- Scan de ports
-    - `apt install portsentry`
-    - modifier le fichier /etc/default/portsentry
-      ```
-      TCP_MODE="atcp"
-      UDP_MODE="audp"
-      ```
-    - modifier le ficher /etc/portsentry/portsentry.conf
-      ```
-      BLOCK_UDP="1"
-      BLOCK_TCP="1"
-      ```
-      ```
-      KILL_ROUTE="/sbin/iptables -I INPUT -s $TARGET$ -j DROP" # Décommenter cette ligne et commenter les autres KILL_ROUTE
-      ```
-  
-### Tester
+-----------------
 
-- afficher l'ip table : `iptables --list`
-- tester le firewall (arreter portsentry d'abord `service portentry stop` puis utiliser `nmap 10.11.200.233` depuis le host (penser à réactiver portsentry : `service portsentry start`
-- tester le DoS:
-    - faire plusieurs tentatives de connexion ssh erronées
-    - utiliser slowloris :
-        ```
-        git clone https://github.com/llaera/slowloris.pl
-        cd slowloris.pl
-        perl slowloris.pl -dns 10.11.200.233
-        ```
-    - pour retirer l'ip des ip bannies, utiliser la commande `iptables -D INPUT 1`
- - tester le scan de port : `nmap 10.11.200.233` (puis penser à retirer l'ip des ip bannies)
+## Protecting the machine
 
+### Firewall
 
-## Arrêter les services
+📕 *Resources: [Debian firewall](https://wiki.debian.org/DebianFirewall), [Uncomplicated Firewall](https://wiki.debian.org/Uncomplicated%20Firewall%20%28ufw%29)
 
-- `service <service> stop`
+For this part you can propably try and edit the iptable yourself with your bare hands. But Uncomplicated Firewall is, well... uncomplicated and makes it really easy to set up the firewall.
 
-### Tester
-- pour voir les services : `service --status-all`
-- Pour voir la liste des services + description : `systemctl list-units | grep service`
+1. Install Uncomplicated Firewall : `apt install ufw`
+2. `ufw enable`
+3. The subject asks that only the usefull services should be accessible, so you need to close all the ports except for ssh (mine is 2222), http and https (for the optional webserver part) :
+    ```
+    ufw default deny incoming
+    ufw default allow outgoing
+    ufw allow 2222
+    ufw allow http
+    ufw allow https
+    ```
+    🔮 *Even if you don't do the webserver part, allow the http and https ports. It will be useful when you set up PortSentry, which won't work if only one port is open, but will work if 3 are*
+4. `service ufw restart`
+
+### DoS attacks
+
+📕 *Resources: [Denaial of Service attacks: definition and prevention](https://javapipe.com/blog/denial-of-service-attack/), [Sécuriser votre serveur avec fail2ban](https://www.geek17.com/fr/content/debian-9-stretch-securiser-votre-serveur-avec-fail2ban-31)*
+
+Once again, you can probably try to play with the iptable to do this, but fail2ban makes it easier (and is also mentioned in the evaluation).
+
+1. Install fail2ban: `apt install fail2ban`
+2. Enable fail2ban on opened ports: edit the  **/etc/fail2ban/jail.conf** file to look like this:
+    ```
+    [sshd]
+    # Comment...
+    enabled = true
+    port = 2222
+    logpath = #...
+    ```
+3. (optional) It is also possible to change the number of failed attempts and ban time in the same file: change `bantime = 180` and `maxretry = 5`.
+4. `service fail2ban restart`
+
+### Port scanning
+
+📕 *Resources: [Se protéger contre le scan de ports avec PortSentry](https://fr-wiki.ikoula.com/fr/Se_prot%C3%A9ger_contre_le_scan_de_ports_avec_portsentry)*
+
+1. Install PortSentry: `apt install portsentry`
+2. Use advanced tcp and udp mode: edit the **/etc/default/portsentry** file to look like this:
+    ```
+    TCP_MODE="atcp"
+    UDP_MODE="audp"
+    ```
+3. Block udp and tcp scans and add the offending IPs to the iptable: edit the **/etc/portsentry/portsentry.conf** file to look like this (uncomment this KILL_ROUTE and comment the others):
+    ```
+    BLOCK_UDP="1"
+    BLOCK_TCP="1"
+    ```
+    ```
+    KILL_ROUTE="/sbin/iptables -I INPUT -s $TARGET$ -j DROP"
+    ```
+ 4. `service portsentry restart`
+      
+-------
+
+⚡️ **Testing**
+
+- [x] You can list the firewall rules with `ufw status verbose` or `iptables --list`. The default policy should be DROP. `iptables --list | grep 2222` should show that the policy for 2222 is ACCEPT. Same for http and https.
+- [x] To simulate a DoS attack, you can use Slowloris (you can refer to [this tutorial](https://www.yeahhub.com/perform-dos-attack-5-different-tools-2018-update/)) :
+    * In the host machine:
+        + Download slowloris: `git clone https://github.com/llaera/slowloris.pl`
+        + Launch the attack:
+            ```
+            cd slowloris.pl
+            perl slowloris.pl -dns 10.11.200.233
+            ```
+            Nothing should happen.
+    * In the the VM, `iptables --list | head` should show your IP address is banned.
+    * Stop the attack, and remove your IP from the list of banned IP: `iptables -D INPUT 1`.
+    * `service restart portsentry` (it needs to take into account your change in the iptables)
+- [x] To simulate the portscan, use nmap (you can refer to [this tutorial](https://www.memoinfo.fr/tutoriels-linux/tuto-nmap-scaner-les-ports-ouverts/) :
+    * In the host machine:
+        + Download nmap: `brew install nmap`
+        + Launch the scan: `nmap 10.11.200.233`. Nothing should happen.
+    * In the the VM, `iptables --list | head` should show your IP address is banned.
+    * `iptables -D INPUT 1`
+    * `service restart portsentry`
+
+-------
 
 ## Scripts
 
-- `apt install mailutils` pour pouvoir envoyer des mails
-- crontab -e pour créer la crontab et éditer le contenu pour planifier les scripts
-    ```
-    SHEL=/bin/bash
-    PATH=/sbin:/bin:/usr/sbin:/usr/bin
-    
-    @reboot sh /update.sh
-    0 4 * * 1 sh /update.sh
-    0 0 * * * sh /cronCheck.sh
-    ```
+The first script should perform `apt update` and `apt upgrade` and log the result in the **/var/log/update_script.log** file. I added a timestamp at the beginning to know when the update was performed:
+
+```
+LOGFILE=/var/log/pudate_script.log
+
+date `+[%c]` >> $LOGFILE
+apt update -y 2>/dev/null >> $LOGFILE
+apt upgrade -y 2>/dev/null >> $LOGFILE
+echo "" >> $LOGFILE
+```
+
+💡 *In case you didn't know:
+`2>/dev/null` redirects any message on the error output (file descriptor 2) to /dev/null (basically, it sends it to the void)
+`>>` appends to a file while `>` overwrites a file.*
+
+The second script should monitor the **/etc/crontab** file and send an email if it was modified since the last check was performed. Therefore, you need some kind of backup of the file to compare the old one with the current one. I chose to store a hash of the file in another file (**/var/tmp/cron_hash**).
+You'll need to download mailutils to be able to send a mail (`apt install mailutils`).
+
+```
+CRON=/etc/crontab
+CRONHASH=/var/tmp/cron_hash
+
+if [ -f $CRON ]; then
+    if [ -f $CRONHASH ]; then
+        if [ "$(cat $CRONHASH)" != "$(md5sum $CRON)" ]; then
+            echo "$CRON was modified" | mail -s "cronCheck report" root@roger
+        fi
+    fi
+    md5sum $CRON > $CRONHASH
+fi
+```
+
+🔮 *By default, there is an alias of root to your initial users. Which means the mail you send to root will be in <username>'s inbox. You can change it in the /etc/aliases file. But even after deleting the alias or changing it for `root: root`, you will not be able to read the mail received by root using the `mail` command, because the mail will then be stored in /var/mail/mail and not /var/mail/root. There's probably a way to fix that though, but I couldn't be bothered as it is not super useful for this project.*
+
+Now that the scripts are done, you need to program their execution with crontab. Use `crontab -e` to create and edit (or only edit if it already exists) a crontab (it will not be the same as the **/etc/crontab** as this is the system's crontab). Then edit it to look like this (minus the comments):
+
+```
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+  
+@reboot sh /update.sh #execute the update script when the vm reboots
+0 4 * * 1 sh /update.sh #execute the update script when it is 0 minutes past 4 hours, whatever the day of the month, every month, on Monday
+0 0 * * * sh /cronCheck.sh #execute the cronCheck script when it is 0 mintutes past 0 hours, every day, every month, every day of the week
+```
     
 ### Tester
 - Pour le script d'update : `cat /var/log/update_script.log` doit avoir le log du boot de debut de correction
