@@ -77,7 +77,7 @@ This page is intended to be a walkthrough to complete the project for someone wh
 ⚡️ **Testing**
 
 - [x] You can check the partitions with the `fdisk -l` command.
-⚠️ *It is normal for the partition to be only 3.9GB when you set it up to be 4.2GB because fdisk displays the size in gibibytes. [A simple conversion](https://www.gbmb.org/gib-to-gb) shows that 3.9GiB = 4.2GB.*
+<br /> ⚠️ *It is normal for the partition to be only 3.9GB when you set it up to be 4.2GB because fdisk displays the size in gibibytes. [A simple conversion](https://www.gbmb.org/gib-to-gb) shows that 3.9GiB = 4.2GB.*
 - [x] You can test that your initial user has sudo rights by running any command with sudo :
     ```
     su <username>
@@ -100,7 +100,7 @@ This page is intended to be a walkthrough to complete the project for someone wh
 2. Setup the ssh key for <username>. Type the following commands in the host machine:
     - `ssh-keygen` (you can keep the default location for your key if you haven't generated a key before)
     - `ssh-copy-id -i ~/.ssh/id_rsa <username>@10.11.200.233 -p 2222`
-    🔮 *This will automatically copy the generated key to the ~/.ssh/authorized_keys file of <username>. It will ask for <username>'s password to connect to the VM.This is why you needed to leave the possibility of password identification, otherwise you would only have been able to copy the key to the machine via ssh pubkey identification which you haven't set up yet. Or you would have had to copy by hand the key to the ~/.ssh/authorized_keys file, which would have been a pain in the ass.*
+    <br/> 🔮 *This will automatically copy the generated key to the ~/.ssh/authorized_keys file of <username>. It will ask for <username>'s password to connect to the VM.This is why you needed to leave the possibility of password identification, otherwise you would only have been able to copy the key to the machine via ssh pubkey identification which you haven't set up yet. Or you would have had to copy by hand the key to the ~/.ssh/authorized_keys file, which would have been a pain in the ass.*
 3. Edit again the **/etc/ssh/sshd_config** file and change `PasswordAuthentification no`.
 4. `service ssh restart`
 
