@@ -286,3 +286,5 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
         + If you kept the alias and are logged in as someone else, **/var/mail/<username>** should be empty
         + If you deleted the alias, **/var/mail/mail** should be empty
     * Edit **/etc/crontab** and execute the script. Now the same method as before should tell you that there is mail.
+
+<img align="right" src="https://i.imgur.com/bAvbvAN.png" />
