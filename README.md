@@ -77,7 +77,7 @@ This page is intended to be a walkthrough to complete the project for someone wh
 ⚡️ **Testing**
 
 - [x] You can check the partitions with the `fdisk -l` command.
-    ⚠️ *It is normal for the partition to be only 3.9GB when you set it up to be 4.2GB because fdisk displays the size in gibibytes. [A simple conversion](https://www.gbmb.org/gib-to-gb) shows that 3.9GiB = 4.2GB.*
+⚠️ *It is normal for the partition to be only 3.9GB when you set it up to be 4.2GB because fdisk displays the size in gibibytes. [A simple conversion](https://www.gbmb.org/gib-to-gb) shows that 3.9GiB = 4.2GB.*
 - [x] You can test that your initial user has sudo rights by running any command with sudo :
     ```
     su <username>
