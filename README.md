@@ -8,7 +8,7 @@ This project was completed in August 2019 as part of the 42 cursus. roger-skylin
 
 This page is intended to be a walkthrough to complete the project for someone who has no idea how a virtual machine or systems administration works. My machine is running with Debian 10.0.0.
 
-⚠️ *I am not a very experienced SysAdmin. In fact, this project is as far as I went down that road. So please take everything written here with a grain of salt*
+⚠️ *I am not an experienced SysAdmin. In fact, this project is as far as I went down that road. So please take everything written here with a grain of salt*
 
 **Overview of the project**
 - [Setting up the VM](#setting-up-the-vm)
